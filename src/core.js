@@ -11,7 +11,7 @@ export function createBoard(size = DEFAULT_SIZE) {
   }
   cells[size + 1] = 'start';
   cells[(size - 2) * size + size - 2] = 'exit';
-  return { version: 2, size, title: 'My Maze', theme: 'castle', cells, notes: {}, collected: [] };
+  return { version: 2, size, title: 'My Maze', theme: 'castle', cells, notes: {}, media: {}, collected: [] };
 }
 
 export function exampleBoard() {
@@ -30,7 +30,7 @@ export function exampleBoard() {
 }
 
 export function copyBoard(board) {
-  return { ...board, cells: [...board.cells], notes: { ...board.notes }, collected: [...(board.collected || [])] };
+  return { ...board, cells: [...board.cells], notes: { ...board.notes }, media: { ...(board.media || {}) }, collected: [...(board.collected || [])] };
 }
 
 export function normalizeBoard(input) {
@@ -49,9 +49,29 @@ export function normalizeBoard(input) {
         notes[i] = value.slice(0, 500);
     }
   }
+  const media = {};
+  let mediaBytes = 0;
+  if (input.media && typeof input.media === 'object' && !Array.isArray(input.media)) {
+    for (const [key, value] of Object.entries(input.media)) {
+      const i = Number(key);
+      if (!Number.isInteger(i) || i < 0 || i >= size * size ||
+          !value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const safe = {};
+      for (const field of ['image','audio']) {
+        const data = value[field];
+        const prefix = field === 'image' ? /^data:image\/(jpeg|png|webp);base64,/ :
+          /^data:audio\/(mp4|mpeg|webm|ogg|x-m4a);base64,/;
+        if (typeof data === 'string' && data.length < 550_000 && prefix.test(data) &&
+            mediaBytes + data.length < 2_000_000) {
+          safe[field] = data;mediaBytes += data.length;
+        }
+      }
+      if (Object.keys(safe).length) media[i] = safe;
+    }
+  }
   const title = typeof input.title === 'string' ? input.title.slice(0, 80) : 'Imported Maze';
   const theme = THEMES.includes(input.theme) ? input.theme : 'castle';
-  return { version: 2, size, title, theme, cells: [...input.cells], notes, collected: [] };
+  return { version: 2, size, title, theme, cells: [...input.cells], notes, media, collected: [] };
 }
 
 export function paintCell(board, index, type) {
