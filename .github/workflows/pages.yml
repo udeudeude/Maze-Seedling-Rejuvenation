@@ -24,6 +24,12 @@ jobs:
           node-version: '22'
       - name: Validate maze and application
         run: npm test
+      - name: Install browser test tools
+        run: npm install --no-save playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+      - name: Browser acceptance test
+        run: node tests/browser-smoke.mjs
 
   deploy:
     needs: test
