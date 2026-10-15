@@ -6,7 +6,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
-const root=fileURLToPath(new URL('../',import.meta.url));
+const root=path.resolve(fileURLToPath(new URL('../',import.meta.url)));
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',
   '.svg':'image/svg+xml','.json':'application/json','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{
