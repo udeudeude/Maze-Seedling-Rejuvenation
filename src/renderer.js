@@ -6,6 +6,18 @@ const PALETTES = {
   ruins: { sky:['#9d7861','#f1bf83'], floor:['#73513c','#392e30'], wall:[192,146,98], trim:'#f2d19e', name:'Ancient Ruins' },
   forest: { sky:['#163036','#528674'], floor:['#283d25','#14231a'], wall:[77,116,78], trim:'#c9f99a', name:'Overgrown Labyrinth' }
 };
+const IMAGE_CACHE = new Map();
+function cachedImage(src) {
+  if (!src) return null;
+  if (!IMAGE_CACHE.has(src)) {
+    const image = new Image();
+    image.src = src;
+    IMAGE_CACHE.set(src,image);
+    if (IMAGE_CACHE.size > 40) IMAGE_CACHE.delete(IMAGE_CACHE.keys().next().value);
+  }
+  const image=IMAGE_CACHE.get(src);
+  return image?.complete && image.naturalWidth ? image : null;
+}
 const FOV = 1.12;
 function clamp(n,a,b){return Math.min(b,Math.max(a,n))}
 function ray(board, x,y,dx,dy) {
@@ -61,6 +73,13 @@ function sprites(ctx,rect,board,p,depth,palette,pitch){
       for(let i=0;i<points;i++){const a=i/points*Math.PI*2,r=i%2&&points===8?size*.17:size*.35;
         const x=Math.cos(a)*r,yy=-size*.48+Math.sin(a)*r;i?ctx.lineTo(x,yy):ctx.moveTo(x,yy)}
       ctx.closePath();ctx.fill();
+    }
+    const picture=cachedImage(board.media?.[item.index]?.image);
+    if(picture){
+      const width=Math.min(size*.82,rect.w*.34),height=width*picture.naturalHeight/picture.naturalWidth;
+      ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillStyle='#ecdcac';
+      ctx.fillRect(-width/2-3,-size*1.2-height-3,width+6,height+6);
+      ctx.drawImage(picture,-width/2,-size*1.2-height,width,height);
     }
     ctx.restore();
   }
