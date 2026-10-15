@@ -58,10 +58,14 @@
 <div class="fields"><label>Object<select id="objectSelect"></select></label></div>
 <label>Encounter message<textarea id="objectNote" maxlength="500" rows="3" placeholder="What do explorers discover here?"></textarea></label>
 <div class="row wrap"><button id="saveNoteBtn">Save encounter</button><button id="speakBtn" class="secondary">Hear message</button></div>
-<p class="hint">Messages are saved with the maze and spoken using the device's available text-to-speech voice.</p></div></section>
+<div class="media-tools"><h3>Make it yours</h3>
+<p class="hint">Attach a picture or short recording to an encounter. Included in exported maze files, not shared layout links.</p>
+<div class="row wrap"><label class="file-label">Attach photograph<input id="objectPhoto" type="file" accept="image/*" capture="environment"></label><button id="removePhotoBtn" class="secondary">Remove picture</button></div>
+<img id="picturePreview" class="picture-preview hidden" alt="Picture attached to maze encounter">
+<div class="row wrap"><button id="recordBtn" class="secondary">Record voice (10s)</button><button id="playRecordingBtn" class="secondary">Play voice</button><button id="removeRecordingBtn" class="secondary">Remove voice</button></div></div><p class="hint">Written messages can be read using on-device speech synthesis.</p></div></section>
 <section id="explore" class="screen hidden"><div class="section-heading"><div><p class="eyebrow">FIRST-PERSON ADVENTURE</p><h2>Walk your creation</h2></div><button class="secondary" id="restartBtn">Restart</button></div>
 <div class="panel dark"><div class="hud"><span id="timer">00:00</span><span id="inventory">✦ 0</span><button id="mapBtn" class="quiet">Map: on</button></div>
-<canvas id="view" class="scene" aria-label="First person maze view"></canvas>
+<canvas id="view" class="scene" aria-label="First person maze view"></canvas><div id="encounterCard" class="encounter-card hidden"><img id="encounterImage" class="hidden" alt="Discovered picture"><span id="encounterText"></span><button id="closeEncounterBtn" class="secondary">Close</button></div>
 <div class="pad" aria-label="Movement controls">
 <div></div><button data-control="forward" aria-label="Forward">▲</button><div></div>
 <button data-control="left" aria-label="Turn left">↶</button><button data-control="back" aria-label="Backward">▼</button><button data-control="right" aria-label="Turn right">↷</button>
