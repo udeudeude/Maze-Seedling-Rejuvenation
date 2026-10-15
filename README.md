@@ -8,7 +8,7 @@ A new, independent, browser-based companion for the **Seedling Design Your Own M
 
 1. **Build:** An editor on the original **18 × 18 grid** (and 12 × 12 import compatibility). Place wooden walls, starts, exits, holes, treasures, riddles, and paired secret passages.
 2. **Scan assistant:** Photograph the board from above. Indicate its four corners; sample a wooden block and the paper floor; preview suggested wall squares; apply them and correct mistakes manually. This is color segmentation, **not full automatic object recognition**.
-3. **Imagine:** Choose castle, starship, ancient ruins, or overgrown maze. Write custom messages for encounters and hear them using on-device speech synthesis.
+3. **Imagine:** Choose castle, starship, ancient ruins, or overgrown maze. Write custom messages and answerable riddles, attach photographs and ten-second voice recordings, and hear notes using on-device speech synthesis.
 4. **Explore:** First-person raycasting with textured walls, minimap, collectibles, traps, timer, touch, keyboard and optional gamepad.
 5. **VR:** Cardboard stereoscopic view, device-orientation head tracking, optional auto-walk, and configurable speed. Split-screen works around Safari's limited WebXR support.
 6. **Two-device controller:** Short-code pairing through public PeerJS signaling over WebRTC, with manual offer/answer fallback. In a headset, one phone hosts while another controls movement.
@@ -31,10 +31,10 @@ For offline use, install the app from the browser after loading it successfully 
 
 - Not a copy of Seedling's original art, interface, proprietary 3D assets, or computer-vision engine.
 - Image recognition is a guided color-segmentation approximation and needs manual review. It detects wall candidates, not automatic starts, exits, or punched holes.
-- The PeerJS signaling server is a third-party availability dependency; manual WebRTC setup is provided as a fallback.
+- Easy pairing uses a third-party PeerJS signaling service; manual WebRTC setup is provided as a fallback. A connected second phone can use buttons or motion-based tilt steering.
 - iOS Safari generally lacks immersive WebXR; we provide split-screen Canvas + motion orientation instead. Fullscreen and orientation permissions vary by device.
-- Encounter messages currently use speech synthesis, not microphone recordings. Photos are not uploaded or included in saved maze files.
-- The game is designed for performance on phones, using a lightweight Canvas renderer instead of photorealistic WebGL.
+- Photos and supported microphone recordings are stored locally with maze JSON, but not included in share links or uploaded to a server. Photos used only for scanning are separate and are not saved into maze files automatically.
+- The game is designed for performance on phones, using a lightweight Canvas renderer instead of photorealistic WebGL. Battery saver can reduce rendering resolution.
 
 ## Development
 
