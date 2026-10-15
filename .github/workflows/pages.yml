@@ -1,6 +1,9 @@
-name: Deploy Maze to GitHub Pages
+name: Test and deploy MAZE
+
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -9,12 +12,25 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
-  test-and-deploy:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate maze and application
+        run: npm test
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -22,12 +38,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Test maze logic
-        run: node --test tests/*.test.mjs
-      - name: Upload static site
+      - name: Upload static files
         uses: actions/upload-pages-artifact@v4
         with:
           path: .
-      - name: Deploy GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
