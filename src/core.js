@@ -11,7 +11,7 @@ export function createBoard(size = DEFAULT_SIZE) {
   }
   cells[size + 1] = 'start';
   cells[(size - 2) * size + size - 2] = 'exit';
-  return { version: 2, size, title: 'My Maze', theme: 'castle', cells, notes: {}, media: {}, collected: [] };
+  return { version: 2, size, title: 'My Maze', theme: 'castle', cells, notes: {}, answers: {}, media: {}, collected: [] };
 }
 
 export function exampleBoard() {
@@ -30,7 +30,7 @@ export function exampleBoard() {
 }
 
 export function copyBoard(board) {
-  return { ...board, cells: [...board.cells], notes: { ...board.notes }, media: { ...(board.media || {}) }, collected: [...(board.collected || [])] };
+  return { ...board, cells: [...board.cells], notes: { ...board.notes }, answers: { ...(board.answers || {}) }, media: { ...(board.media || {}) }, collected: [...(board.collected || [])] };
 }
 
 export function normalizeBoard(input) {
@@ -47,6 +47,14 @@ export function normalizeBoard(input) {
       const i = Number(key);
       if (Number.isInteger(i) && i >= 0 && i < size * size && typeof value === 'string')
         notes[i] = value.slice(0, 500);
+    }
+  }
+  const answers = {};
+  if (input.answers && typeof input.answers === 'object' && !Array.isArray(input.answers)) {
+    for(const [key,value] of Object.entries(input.answers)){
+      const i=Number(key);
+      if(Number.isInteger(i)&&i>=0&&i<size*size&&typeof value==='string')
+        answers[i]=value.slice(0,100);
     }
   }
   const media = {};
@@ -71,7 +79,7 @@ export function normalizeBoard(input) {
   }
   const title = typeof input.title === 'string' ? input.title.slice(0, 80) : 'Imported Maze';
   const theme = THEMES.includes(input.theme) ? input.theme : 'castle';
-  return { version: 2, size, title, theme, cells: [...input.cells], notes, media, collected: [] };
+  return { version: 2, size, title, theme, cells: [...input.cells], notes, answers, media, collected: [] };
 }
 
 export function paintCell(board, index, type) {
