@@ -1,0 +1,18 @@
+{
+  "name": "Maze • Seedling Rejuvenation",
+  "short_name": "MAZE",
+  "description": "Create, scan and explore a marble maze in Google Cardboard.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1826",
+  "theme_color": "#142638",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
