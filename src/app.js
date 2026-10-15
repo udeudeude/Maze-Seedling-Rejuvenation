@@ -227,12 +227,16 @@ function refreshObjects(){
   if(!select.options.length)select.add(new Option('Place an object in Build first',''));
   if([...select.options].some(o=>o.value===selected))select.value=selected;
   $('objectNote').value=board.notes[select.value]||'';
+  $('objectAnswer').value=board.answers?.[select.value]||'';
+  $('answerWrap').classList.toggle('hidden',board.cells[Number(select.value)]!=='riddle');
   refreshMedia();
 }
-$('objectSelect').onchange=()=>{$('objectNote').value=board.notes[$('objectSelect').value]||'';refreshMedia()};
+$('objectSelect').onchange=()=>{$('objectNote').value=board.notes[$('objectSelect').value]||'';$('objectAnswer').value=board.answers?.[$('objectSelect').value]||'';$('answerWrap').classList.toggle('hidden',board.cells[Number($('objectSelect').value)]!=='riddle');refreshMedia()};
 $('saveNoteBtn').onclick=()=>{
   const key=$('objectSelect').value;if(!key||!/^\d+$/.test(key))return notify('Place an object first.');
-  board.notes[key]=$('objectNote').value.slice(0,500);persist();notify('Encounter saved.');
+  board.notes[key]=$('objectNote').value.slice(0,500);
+  board.answers ||= {};if(board.cells[Number(key)]==='riddle')board.answers[key]=$('objectAnswer').value.slice(0,100);
+  persist();notify('Encounter saved.');
 };
 function selectedObject(){const k=$('objectSelect').value;return /^\d+$/.test(k)?Number(k):null}
 function refreshMedia(){
@@ -335,6 +339,18 @@ function move(fwd,strafe){
   let tile=Math.floor(player.y)*board.size+Math.floor(player.x);
   if(tile!==lastTile){lastTile=tile;encounter(tile)}
 }
+let activeRiddle=-1;
+$('solveRiddleBtn').onclick=()=>{
+  if(activeRiddle<0)return;
+  const correct=String(board.answers?.[activeRiddle]||'').trim().toLocaleLowerCase();
+  const guess=$('riddleGuess').value.trim().toLocaleLowerCase();
+  if(correct&&guess===correct){
+    collected.add(activeRiddle);$('inventory').textContent='✦ '+collected.size;
+    soundscape.cue('treasure');notify('Correct! You solved the riddle.');
+    $('riddleDialog').close();activeRiddle=-1;
+  }else notify('Not quite. Try another answer or keep exploring.');
+};
+$('skipRiddleBtn').onclick=()=>{$('riddleDialog').close();activeRiddle=-1};
 function encounter(tile){
   const type=board.cells[tile],note=board.notes[tile];
   if(!['empty','wall','start'].includes(type))soundscape.cue(type);
@@ -359,6 +375,10 @@ function encounter(tile){
   }
   const defaults={treasure:'You found a treasure!',riddle:'A mysterious riddle awaits.',portal:'A secret passage!',boost:'You found a power-up!'};
   const line=note||defaults[type];if(line){notify(line);showEncounter(tile,line);if(note&&type==='riddle'&&!board.media?.[tile]?.audio)speak(note)}
+  if(type==='riddle'&&board.answers?.[tile]&&!collected.has(tile)&&screen==='explore'){
+    activeRiddle=tile;$('riddleQuestion').textContent=line||'Solve this riddle.';
+    $('riddleGuess').value='';$('riddleDialog').showModal();
+  }
 }
 function commandPressed(name,pressed){
   if(!['forward','back','left','right'].includes(name))return;
@@ -568,9 +588,10 @@ window.addEventListener('deviceorientation',e=>{
     dataChannel.send(JSON.stringify({kind:'tilt',x,y}));lastTiltSent=performance.now();
   }
 });
+let lastRender=0;
 function tick(now){
   let dt=Math.min(.06,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
-  if((screen==='explore'||screen==='vr')&&!finished){
+  if((screen==='explore'||screen==='vr')&&!finished&&!$('riddleDialog').open){
     const keys=new Set([...activeControls,...remoteControls]);
     const pads=navigator.getGamepads?.()||[];
     for(const pad of pads){if(!pad)continue;
@@ -588,8 +609,12 @@ function tick(now){
     seconds+=dt;
   }
   $('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(Math.floor(seconds%60)).padStart(2,'0');
-  if(screen==='explore')renderMaze($('view'),board,player,{showMap,quality:'normal'});
-  if(screen==='vr')renderMaze($('stereo'),board,player,{stereo:true,quality:'normal'});
+  if(now-lastRender>32){
+    const quality=$('renderQuality').value;
+    if(screen==='explore')renderMaze($('view'),board,player,{showMap,quality});
+    if(screen==='vr')renderMaze($('stereo'),board,player,{stereo:true,quality});
+    lastRender=now;
+  }
   requestAnimationFrame(tick);
 }
 persist();gridDraw();refreshLibrary();refreshObjects();selectTheme();
