@@ -52,8 +52,11 @@ export class PhotoScanner {
   tap(event) {
     if (!this.source.width || this.mode === 'none') return;
     const r = this.canvas.getBoundingClientRect();
-    const x = (event.clientX-r.left)/r.width*this.source.width;
-    const y = (event.clientY-r.top)/r.height*this.source.height;
+    // Account for object-fit letterboxing on narrow/landscape phone screens.
+    const scale = Math.min(r.width/this.source.width,r.height/this.source.height);
+    const contentW=this.source.width*scale,contentH=this.source.height*scale;
+    const x = (event.clientX-r.left-(r.width-contentW)/2)/scale;
+    const y = (event.clientY-r.top-(r.height-contentH)/2)/scale;
     const p = { x:Math.max(0,Math.min(this.source.width-1,x)),
                 y:Math.max(0,Math.min(this.source.height-1,y)) };
     if (this.mode === 'corners') {
