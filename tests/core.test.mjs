@@ -56,3 +56,25 @@ test('color classification uses wall and floor references', () => {
   assert.equal(classifySamples([109,79,43],floor,wall).wall, true);
   assert.equal(classifySamples([229,220,205],floor,wall).wall, false);
 });
+
+test('encounter answers and safe media survive JSON export/import',()=>{
+  const b=createBoard();
+  b.cells[b.size+2]='riddle';
+  b.answers[b.size+2]='The moon';
+  b.media[b.size+2]={
+    image:'data:image/jpeg;base64,AAAA',
+    audio:'data:audio/mp4;base64,AAAA'
+  };
+  const imported=normalizeBoard(JSON.parse(JSON.stringify(b)));
+  assert.equal(imported.answers[b.size+2],'The moon');
+  assert.equal(imported.media[b.size+2].image,b.media[b.size+2].image);
+  assert.equal(imported.media[b.size+2].audio,b.media[b.size+2].audio);
+});
+test('reject media with active URLs or SVG payloads',()=>{
+  const b=createBoard();
+  b.media[20]={image:'javascript:alert(1)',audio:'https://example.com/audio'};
+  b.media[21]={image:'data:image/svg+xml;base64,AAAA'};
+  const parsed=normalizeBoard(b);
+  assert.equal(parsed.media[20],undefined);
+  assert.equal(parsed.media[21],undefined);
+});
