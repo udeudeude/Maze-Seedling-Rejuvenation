@@ -1,6 +1,6 @@
 // Offline-first app shell. Navigation is network-first so new deployments can update.
-const CACHE='seedling-rejuvenation-v3';
-const SHELL=['./','./index.html','./style.css','./src/core.js','./src/app.js','./src/scanner.js','./src/renderer.js','./manifest.webmanifest','./icon.svg'];
+const CACHE='seedling-rejuvenation-v4';
+const SHELL=['./','./index.html','./style.css','./src/core.js','./src/app.js','./src/scanner.js','./src/renderer.js','./src/audio.js','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
 });
