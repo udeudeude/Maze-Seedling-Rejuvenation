@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#142638"><meta name="description" content="Bring your physical Seedling marble maze into a virtual world. An independent preservation project.">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>MAZE | Build a world. Step inside.</title><link rel="stylesheet" href="./style.css">
@@ -57,6 +57,7 @@
 <div class="panel"><h3>Add clues, riddles and messages</h3><p class="hint">Place a riddle, treasure, portal, or other object in Build; tap its tile to select it here. A message appears when the explorer finds it.</p>
 <div class="fields"><label>Object<select id="objectSelect"></select></label></div>
 <label>Encounter message<textarea id="objectNote" maxlength="500" rows="3" placeholder="What do explorers discover here?"></textarea></label>
+<label id="answerWrap" class="hidden">Riddle solution (optional)<input id="objectAnswer" maxlength="100" placeholder="The answer explorers must enter"></label>
 <div class="row wrap"><button id="saveNoteBtn">Save encounter</button><button id="speakBtn" class="secondary">Hear message</button></div>
 <div class="media-tools"><h3>Make it yours</h3>
 <p class="hint">Attach a picture or short recording to an encounter. Included in exported maze files, not shared layout links.</p>
@@ -72,7 +73,7 @@
 </div><p class="hint">Hold buttons to move. Keyboard: W/A/S/D or arrow keys. Gamepads also supported when the browser provides access.</p></div></section>
 <section id="vr" class="screen hidden"><div class="section-heading"><div><p class="eyebrow">GOOGLE CARDBOARD</p><h2>Enter the labyrinth</h2></div></div>
 <div class="panel"><div class="row wrap"><button id="enableMotionBtn">Enable head tracking</button><button id="recenterBtn" class="secondary">Recenter direction</button><button id="fullscreenBtn" class="secondary">Fullscreen</button><button id="vrSoundBtn" class="secondary">Sound: off</button></div>
-<div class="fields"><label><input type="checkbox" id="autoWalk"> Walk automatically</label><label>Walk speed<input id="walkSpeed" type="range" min="1" max="10" value="4"></label></div>
+<div class="fields"><label><input type="checkbox" id="autoWalk"> Walk automatically</label><label>Walk speed<input id="walkSpeed" type="range" min="1" max="10" value="4"></label><label>Rendering <select id="renderQuality"><option value="normal">Full</option><option value="low">Battery saver</option></select></label></div>
 <p class="hint">Place your phone horizontally in a Cardboard viewer. Grant motion access on iPhone. Auto-walk is off until you enable it; use another phone or a Bluetooth gamepad for precise movement.</p></div>
 <canvas id="stereo" class="scene stereo" aria-label="Stereoscopic Cardboard scene"></canvas>
 <p class="hint">Safari may not permit fullscreen. Add this site to your Home Screen for a larger view.</p></section>
@@ -94,6 +95,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <footer>Independent preservation project · Not affiliated with Seedling · <a href="https://github.com/udeudeude/Maze-Seedling-Rejuvenation">Source code</a></footer>
 </main>
+<dialog id="riddleDialog"><h2>A riddle!</h2><p id="riddleQuestion"></p><label>Your answer<input id="riddleGuess" maxlength="100" autocomplete="off"></label><div class="row wrap"><button id="solveRiddleBtn">Solve</button><button id="skipRiddleBtn" class="secondary">Keep exploring</button></div></dialog>
 <dialog id="helpDialog"><h2>How it works</h2><p><strong>Build</strong> an 18×18 digital representation of your physical maze, or photograph it and use the scan assistant to suggest walls. <strong>Imagine</strong> the setting and add encounters. <strong>Explore</strong> on the screen or in a Cardboard headset.</p><p><strong>Save</strong> to your device and export JSON for backup. Web browsers cannot recreate the retired iOS application's exact computer vision or historical assets; this is a new independent implementation.</p><button id="closeHelp">Got it</button></dialog>
 <script type="module" src="./src/app.js"></script>
 </body></html>
