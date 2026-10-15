@@ -191,6 +191,9 @@ $('applyScanBtn').onclick=()=>{
     if(old==='start'||old==='exit'||old==='trap'||old==='treasure'||old==='portal'||old==='riddle'||old==='boost')return;
     next.cells[i]=wall?'wall':'empty';if(wall)hits++;
   });
+  // Keep the physical wooden outer border even if the photograph crops it.
+  for(let x=0;x<board.size;x++)for(const y of [0,board.size-1])next.cells[y*board.size+x]='wall';
+  for(let y=0;y<board.size;y++)for(const x of [0,board.size-1])next.cells[y*board.size+x]='wall';
   board=normalizeBoard(next);afterBoardChange();toScreen('build');
   notify('Applied '+hits+' possible walls. Please correct the layout and mark any holes.');
 };
@@ -211,12 +214,101 @@ function refreshObjects(){
   if(!select.options.length)select.add(new Option('Place an object in Build first',''));
   if([...select.options].some(o=>o.value===selected))select.value=selected;
   $('objectNote').value=board.notes[select.value]||'';
+  refreshMedia();
 }
-$('objectSelect').onchange=()=>{$('objectNote').value=board.notes[$('objectSelect').value]||''};
+$('objectSelect').onchange=()=>{$('objectNote').value=board.notes[$('objectSelect').value]||'';refreshMedia()};
 $('saveNoteBtn').onclick=()=>{
   const key=$('objectSelect').value;if(!key||!/^\d+$/.test(key))return notify('Place an object first.');
   board.notes[key]=$('objectNote').value.slice(0,500);persist();notify('Encounter saved.');
 };
+function selectedObject(){const k=$('objectSelect').value;return /^\\d+$/.test(k)?Number(k):null}
+function refreshMedia(){
+  const key=selectedObject(),media=key===null?null:board.media?.[key];
+  const img=$('picturePreview');
+  if(media?.image){img.src=media.image;img.classList.remove('hidden')}
+  else{img.removeAttribute('src');img.classList.add('hidden')}
+  $('playRecordingBtn').disabled=!media?.audio;
+  $('removePhotoBtn').disabled=!media?.image;
+  $('removeRecordingBtn').disabled=!media?.audio;
+}
+function setMedia(field,data){
+  const key=selectedObject();if(key===null)return notify('Place and select an encounter first.');
+  if(!board.media)board.media={};
+  const before=board.media[key]?{...board.media[key]}:{};
+  const next={...before};
+  if(data)next[field]=data;else delete next[field];
+  if(Object.keys(next).length)board.media[key]=next;else delete board.media[key];
+  if(JSON.stringify(board).length>2_000_000){
+    if(Object.keys(before).length)board.media[key]=before;else delete board.media[key];
+    return notify('Media storage limit reached. Try a shorter recording or smaller picture.');
+  }
+  persist();refreshMedia();
+  notify(data?'Encounter '+field+' saved in maze.':'Encounter '+field+' removed.');
+}
+$('objectPhoto').onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(!file.type.startsWith('image/'))throw Error('Select a photograph.');
+    const url=URL.createObjectURL(file);
+    try{
+      const img=new Image();
+      await new Promise((resolve,reject)=>{
+        img.onload=resolve;img.onerror=()=>reject(Error('Cannot read picture.'));img.src=url;
+      });
+      const max=480,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const can=document.createElement('canvas');
+      can.width=Math.max(1,Math.round(img.naturalWidth*scale));
+      can.height=Math.max(1,Math.round(img.naturalHeight*scale));
+      can.getContext('2d').drawImage(img,0,0,can.width,can.height);
+      setMedia('image',can.toDataURL('image/jpeg',.7));
+    }finally{URL.revokeObjectURL(url)}
+  }catch(err){notify(err.message)}finally{e.target.value=''}
+};
+$('removePhotoBtn').onclick=()=>setMedia('image',null);
+$('removeRecordingBtn').onclick=()=>setMedia('audio',null);
+$('playRecordingBtn').onclick=()=>{
+  const data=board.media?.[selectedObject()]?.audio;
+  if(data)new Audio(data).play().catch(()=>notify('Audio playback requires a tap on this device.'));
+};
+let recorder=null,recordTimeout=null;
+$('recordBtn').onclick=async()=>{
+  if(recorder?.state==='recording'){recorder.stop();return}
+  try{
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('Microphone recording is not supported here.');
+    if(selectedObject()===null)throw Error('Choose an encounter first.');
+    const target=selectedObject();
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>MediaRecorder.isTypeSupported?.(m));
+    recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+    const chunks=[];recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+    recorder.onstop=()=>{
+      clearTimeout(recordTimeout);$('recordBtn').textContent='Record voice (10s)';
+      stream.getTracks().forEach(track=>track.stop());
+      const blob=new Blob(chunks,{type:(recorder.mimeType||'audio/webm').split(';')[0]});
+      if(blob.size>380_000)return notify('Recording too large. Try a shorter clip.');
+      const reader=new FileReader();reader.onload=()=>{
+        const old=$('objectSelect').value;
+        $('objectSelect').value=String(target);
+        setMedia('audio',reader.result);
+        $('objectSelect').value=old;
+        refreshMedia();
+      };reader.readAsDataURL(blob);
+    };
+    recorder.start();$('recordBtn').textContent='Stop recording';
+    recordTimeout=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},10000);
+    notify('Recording… up to 10 seconds.');
+  }catch(err){notify('Recording unavailable: '+err.message)}
+};
+function showEncounter(index,message){
+  const card=$('encounterCard'),media=board.media?.[index];
+  $('encounterText').textContent=message||'You discovered something.';
+  if(media?.image){$('encounterImage').src=media.image;$('encounterImage').classList.remove('hidden')}
+  else{$('encounterImage').removeAttribute('src');$('encounterImage').classList.add('hidden')}
+  if(screen==='explore'&&(media?.image||message))card.classList.remove('hidden');
+  if(media?.audio)new Audio(media.audio).play().catch(()=>notify('Tap to play audio in Imagine.'));
+}
+$('closeEncounterBtn').onclick=()=>$('encounterCard').classList.add('hidden');
+
 function speak(message){
   if(!('speechSynthesis' in window))return notify('Speech not available on this device.');
   speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(message);utter.rate=.9;speechSynthesis.speak(utter);
@@ -248,19 +340,18 @@ function encounter(tile){
   if(type==='exit'){
     if(!finished){
       finished=true;const time=Math.floor(seconds);
-      notify((note||'You escaped the maze!')+' Time: '+time+'s. Treasures: '+collected.size+'.');
+      notify((note||'You escaped the maze!')+' Time: '+time+'s. Treasures: '+collected.size+'.');showEncounter(tile,note||'You escaped the maze!');
     }return;
   }
   const defaults={treasure:'You found a treasure!',riddle:'A mysterious riddle awaits.',portal:'A secret passage!',boost:'You found a power-up!'};
-  const line=note||defaults[type];if(line){notify(line);if(note&&type==='riddle')speak(note)}
+  const line=note||defaults[type];if(line){notify(line);showEncounter(tile,line);if(note&&type==='riddle'&&!board.media?.[tile]?.audio)speak(note)}
 }
 function commandPressed(name,pressed){
   if(!['forward','back','left','right'].includes(name))return;
   if(controllerMode&&dataChannel?.readyState==='open'){
     dataChannel.send(JSON.stringify({kind:'control',name,pressed}));return;
   }
-  (pressed?activeControls.delete.bind(activeControls):activeControls.delete.bind(activeControls))(name);
-  if(pressed)activeControls.add(name);
+  if(pressed)activeControls.add(name);else activeControls.delete(name);
 }
 function impulse(name){
   if(controllerMode&&dataChannel?.readyState==='open'){
@@ -312,7 +403,7 @@ $('enableMotionBtn').onclick=async()=>{
     headEnabled=true;yawZero=null;notify('Motion active. Face forward and tap Recenter direction.');
   }catch(e){notify(e.message)}
 };
-$('recenterBtn').onclick=()=>{yawZero=currentYaw;notify('Head direction recentered.')};
+$('recenterBtn').onclick=()=>{yawZero=currentYaw;player.angle=0;player.pitch=0;notify('Head direction recentered.')};
 window.addEventListener('deviceorientation',e=>{
   if(!headEnabled||e.alpha===null||e.alpha===undefined)return;
   const heading=e.alpha*Math.PI/180;
@@ -327,7 +418,7 @@ $('fullscreenBtn').onclick=async()=>{
   try{
     if(screen!=='vr')toScreen('vr');
     await ($('stereo').requestFullscreen?.()||Promise.reject(Error('Browser denies fullscreen.')));
-    screen.orientation?.lock?.('landscape').catch(()=>{});
+    window.screen.orientation?.lock?.('landscape').catch(()=>{});
   }catch{notify('Fullscreen unavailable. Rotate to landscape and try Add to Home Screen.')}
 };
 
