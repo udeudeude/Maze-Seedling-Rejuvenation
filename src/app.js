@@ -2,8 +2,10 @@ import { DEFAULT_SIZE, CELL_TYPES, THEMES, createBoard, exampleBoard, normalizeB
   paintCell, passable, findPath, startPosition, cellAt } from './core.js';
 import { PhotoScanner } from './scanner.js';
 import { renderMaze } from './renderer.js';
+import { Soundscape } from './audio.js';
 
 const $ = id => document.getElementById(id);
+const soundscape=new Soundscape();
 const PRIMARY_KEY='maze-seedling-board-v2', LIBRARY_KEY='maze-seedling-library-v2';
 const ICONS={empty:'',wall:'',start:'S',exit:'E',trap:'×',treasure:'✦',portal:'◉',riddle:'?',boost:'↟'};
 let board,brush='wall',screen='build',history=[],player,scanner,
@@ -98,6 +100,16 @@ function resetGame(){
 }
 $('restartBtn').onclick=()=>{resetGame();notify('Back at the entrance.')};
 $('mapBtn').onclick=()=>{showMap=!showMap;$('mapBtn').textContent='Map: '+(showMap?'on':'off')};
+async function toggleSound(){
+  try{
+    const on=await soundscape.toggle(board.theme);
+    $('soundBtn').textContent='Sound: '+(on?'on':'off');
+    $('vrSoundBtn').textContent='Sound: '+(on?'on':'off');
+  }catch(err){notify(err.message)}
+}
+$('soundBtn').onclick=toggleSound;
+$('vrSoundBtn').onclick=toggleSound;
+
 function toScreen(s){
   screen=s;document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('hidden',el.id!==s));
   document.querySelectorAll('[data-screen]').forEach(el=>el.classList.toggle('active',el.dataset.screen===s));
@@ -202,7 +214,7 @@ function selectTheme(){
   document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('selected',b.dataset.theme===board.theme));
 }
 document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{
-  board.theme=b.dataset.theme;persist();selectTheme();notify('World: '+b.querySelector('strong').textContent);
+  board.theme=b.dataset.theme;persist();selectTheme();soundscape.setTheme(board.theme);notify('World: '+b.querySelector('strong').textContent);
 });
 function refreshObjects(){
   const select=$('objectSelect'),selected=select.value;
@@ -325,6 +337,7 @@ function move(fwd,strafe){
 }
 function encounter(tile){
   const type=board.cells[tile],note=board.notes[tile];
+  if(!['empty','wall','start'].includes(type))soundscape.cue(type);
   if(type==='start'||type==='empty')return;
   if(type==='treasure'||type==='boost'){
     if(collected.has(tile))return;
