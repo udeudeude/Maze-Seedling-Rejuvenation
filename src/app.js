@@ -10,7 +10,8 @@ let board,brush='wall',screen='build',history=[],player,scanner,
     initialTime=performance.now(),seconds=0,finished=false,collected=new Set(),lastTile=-1,
     showMap=true,headEnabled=false,yawZero=null,currentYaw=null,vrAuto=false,
     activeControls=new Set(),remoteControls=new Set(),lastFrame=performance.now(),
-    peer=null,rtc=null,dataChannel=null,hostMode=false,controllerMode=false;
+    peer=null,rtc=null,dataChannel=null,hostMode=false,controllerMode=false,
+    remoteTilt={x:0,y:0},tiltEnabled=false,tiltNeutral=null,lastTilt=null,lastTiltSent=0;
 
 const safeStorage = {
   read(key){try{return localStorage.getItem(key)}catch{return null}},
@@ -385,7 +386,7 @@ window.addEventListener('keydown',e=>{
   if(!e.repeat)commandPressed(name,true);
 });
 window.addEventListener('keyup',e=>{const name=keyMap[e.key];if(name){e.preventDefault();commandPressed(name,false)}});
-window.addEventListener('blur',()=>{activeControls.clear();remoteControls.clear()});
+window.addEventListener('blur',()=>{activeControls.clear();remoteControls.clear();remoteTilt={x:0,y:0}});
 $('actionBtn').onclick=()=>{if(controllerMode&&dataChannel?.readyState==='open')
   dataChannel.send(JSON.stringify({kind:'stop'}));else{activeControls.clear();remoteControls.clear();notify('Stopped.')}};
 $('view').addEventListener('pointerdown',e=>{
@@ -428,7 +429,7 @@ function bindConnection(connection){
     $('connectionStatus').textContent=(controllerMode?'Connected to maze.':'Controller connected.')+' Ready to play.';
     notify('Controller connected.');
   };
-  connection.onclose=()=>{$('connectionStatus').textContent='Disconnected';activeControls.clear();remoteControls.clear()};
+  connection.onclose=()=>{$('connectionStatus').textContent='Disconnected';activeControls.clear();remoteControls.clear();remoteTilt={x:0,y:0}};
   connection.onerror=()=>{$('connectionStatus').textContent='Connection error. Try pairing again.'};
   connection.onmessage=e=>{
     if(!hostMode)return;
@@ -438,7 +439,8 @@ function bindConnection(connection){
         data.pressed?remoteControls.add(data.name):remoteControls.delete(data.name);
       }
       if(data.kind==='impulse')impulse(data.name);
-      if(data.kind==='stop')remoteControls.clear();
+      if(data.kind==='tilt'&&Number.isFinite(data.x)&&Number.isFinite(data.y))remoteTilt={x:Math.max(-1,Math.min(1,data.x)),y:Math.max(-1,Math.min(1,data.y))};
+      if(data.kind==='stop'){remoteControls.clear();remoteTilt={x:0,y:0}};
     }catch(err){console.warn('Unrecognized control message',err)}
   };
 }
@@ -525,6 +527,34 @@ $('easyJoinBtn').onclick=async()=>{
     $('connectionStatus').textContent='Connecting to '+id+'…';
   }catch(e){notify(e.message)}
 };
+$('enableTiltBtn').onclick=async()=>{
+  try{
+    if(typeof DeviceOrientationEvent==='undefined')throw Error('This device has no orientation sensor.');
+    if(typeof DeviceOrientationEvent.requestPermission==='function'){
+      const result=await DeviceOrientationEvent.requestPermission();
+      if(result!=='granted')throw Error('Motion access was declined.');
+    }
+    tiltEnabled=!tiltEnabled;
+    tiltNeutral=null;
+    $('enableTiltBtn').textContent=tiltEnabled?'Disable tilt':'Enable tilt';
+    $('tiltStatus').textContent=tiltEnabled?'Tilt your phone to control the maze.':'Tilt control is off.';
+    if(!tiltEnabled&&dataChannel?.readyState==='open')
+      dataChannel.send(JSON.stringify({kind:'tilt',x:0,y:0}));
+  }catch(err){notify(err.message)}
+};
+$('neutralTiltBtn').onclick=()=>{tiltNeutral=lastTilt;notify(tiltNeutral?'Neutral position calibrated.':'Enable tilt and hold the phone still first.')};
+window.addEventListener('deviceorientation',e=>{
+  if(!tiltEnabled||!Number.isFinite(e.beta)||!Number.isFinite(e.gamma))return;
+  lastTilt={beta:e.beta,gamma:e.gamma};
+  if(!tiltNeutral)tiltNeutral={...lastTilt};
+  const clampTilt=x=>Math.max(-1,Math.min(1,x));
+  const x=clampTilt((e.gamma-tiltNeutral.gamma)/22);
+  const y=clampTilt(-(e.beta-tiltNeutral.beta)/22);
+  $('tiltStatus').textContent='Steer: '+Math.round(x*100)+'% · Walk: '+Math.round(y*100)+'%';
+  if(controllerMode&&dataChannel?.readyState==='open'&&performance.now()-lastTiltSent>65){
+    dataChannel.send(JSON.stringify({kind:'tilt',x,y}));lastTiltSent=performance.now();
+  }
+});
 function tick(now){
   let dt=Math.min(.06,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
   if((screen==='explore'||screen==='vr')&&!finished){
@@ -536,6 +566,8 @@ function tick(now){
     }
     if(keys.has('left'))player.angle-=1.85*dt;
     if(keys.has('right'))player.angle+=1.85*dt;
+    if(remoteTilt.x)player.angle+=remoteTilt.x*1.85*dt;
+    if(remoteTilt.y)move(remoteTilt.y*2.15*dt,0);
     const fwd=Number(keys.has('forward'))-Number(keys.has('back'));
     const speed=screen==='vr'&&vrAuto?Number($('walkSpeed').value)/4:1;
     if(fwd)move(fwd*2.15*dt,0);
