@@ -13,7 +13,8 @@ let board,brush='wall',screen='build',history=[],player,scanner,
     showMap=true,headEnabled=false,yawZero=null,currentYaw=null,vrAuto=false,
     activeControls=new Set(),remoteControls=new Set(),lastFrame=performance.now(),
     peer=null,rtc=null,dataChannel=null,hostMode=false,controllerMode=false,
-    remoteTilt={x:0,y:0},tiltEnabled=false,tiltNeutral=null,lastTilt=null,lastTiltSent=0;
+    remoteTilt={x:0,y:0},tiltEnabled=false,tiltNeutral=null,lastTilt=null,lastTiltSent=0,
+    boostUntil=0;
 
 const safeStorage = {
   read(key){try{return localStorage.getItem(key)}catch{return null}},
@@ -96,7 +97,7 @@ $('sampleBtn').onclick=()=>{
 };
 function resetGame(){
   player=startPosition(board);seconds=0;finished=false;collected.clear();lastTile=-1;
-  initialTime=performance.now();$('timer').textContent='00:00';$('inventory').textContent='✦ 0';activeControls.clear();
+  initialTime=performance.now();boostUntil=0;$('timer').textContent='00:00';$('inventory').textContent='✦ 0';activeControls.clear();
 }
 $('restartBtn').onclick=()=>{resetGame();notify('Back at the entrance.')};
 $('mapBtn').onclick=()=>{showMap=!showMap;$('mapBtn').textContent='Map: '+(showMap?'on':'off')};
@@ -358,6 +359,7 @@ function encounter(tile){
   if(type==='treasure'||type==='boost'){
     if(collected.has(tile))return;
     collected.add(tile);$('inventory').textContent='✦ '+collected.size;
+    if(type==='boost'){boostUntil=performance.now()+12000;notify('Speed boost! 12 seconds.')}
   }
   if(type==='trap'){
     notify(note||'A trap! Back to the entrance.');
@@ -530,7 +532,9 @@ function peerLibrary(){
   });
 }
 function preparePeer(role){
-  peer?.destroy();controllerMode=role==='controller';hostMode=role==='host';
+  peer?.destroy();try{dataChannel?.close?.()}catch{}
+  dataChannel=null;remoteControls.clear();remoteTilt={x:0,y:0};
+  controllerMode=role==='controller';hostMode=role==='host';
 }
 $('easyHostBtn').onclick=async()=>{
   try{
@@ -596,15 +600,15 @@ function tick(now){
     const pads=navigator.getGamepads?.()||[];
     for(const pad of pads){if(!pad)continue;
       if(Math.abs(pad.axes[0]||0)>.2)player.angle+=pad.axes[0]*1.85*dt;
-      if(Math.abs(pad.axes[1]||0)>.2)move(-pad.axes[1]*2.15*dt,0);
+      if(Math.abs(pad.axes[1]||0)>.2)move(-pad.axes[1]*2.15*dt*(now<boostUntil?1.65:1),0);
     }
     if(keys.has('left'))player.angle-=1.85*dt;
     if(keys.has('right'))player.angle+=1.85*dt;
     if(remoteTilt.x)player.angle+=remoteTilt.x*1.85*dt;
-    if(remoteTilt.y)move(remoteTilt.y*2.15*dt,0);
+    if(remoteTilt.y)move(remoteTilt.y*2.15*dt*(now<boostUntil?1.65:1),0);
     const fwd=Number(keys.has('forward'))-Number(keys.has('back'));
     const speed=screen==='vr'&&vrAuto?Number($('walkSpeed').value)/4:1;
-    if(fwd)move(fwd*2.15*dt,0);
+    if(fwd)move(fwd*2.15*dt*(now<boostUntil?1.65:1),0);
     else if(screen==='vr'&&vrAuto)move(.85*speed*dt,0);
     seconds+=dt;
   }
