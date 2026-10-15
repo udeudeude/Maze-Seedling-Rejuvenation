@@ -221,7 +221,7 @@ $('saveNoteBtn').onclick=()=>{
   const key=$('objectSelect').value;if(!key||!/^\d+$/.test(key))return notify('Place an object first.');
   board.notes[key]=$('objectNote').value.slice(0,500);persist();notify('Encounter saved.');
 };
-function selectedObject(){const k=$('objectSelect').value;return /^\\d+$/.test(k)?Number(k):null}
+function selectedObject(){const k=$('objectSelect').value;return /^\d+$/.test(k)?Number(k):null}
 function refreshMedia(){
   const key=selectedObject(),media=key===null?null:board.media?.[key];
   const img=$('picturePreview');
