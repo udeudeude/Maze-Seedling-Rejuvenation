@@ -9,7 +9,7 @@ const file=name=>fs.readFileSync(new URL(name,root),'utf8');
 
 test('site entry points and cached resources exist',()=>{
   const index=file('index.html'),sw=file('sw.js');
-  for(const asset of ['style.css','src/core.js','src/app.js','src/scanner.js','src/renderer.js','manifest.webmanifest','icon.svg']){
+  for(const asset of ['style.css','src/core.js','src/app.js','src/scanner.js','src/renderer.js','src/audio.js','manifest.webmanifest','icon.svg']){
     assert.ok(fs.existsSync(new URL(asset,root)),asset);
     assert.ok(sw.includes('./'+asset),asset+' must be cached for offline use');
   }
@@ -24,7 +24,7 @@ test('all JavaScript DOM IDs exist in the HTML',()=>{
   }
 });
 test('check syntax of each browser module and service worker',()=>{
-  for(const fileName of ['src/core.js','src/scanner.js','src/renderer.js','src/app.js','sw.js']){
+  for(const fileName of ['src/core.js','src/scanner.js','src/renderer.js','src/audio.js','src/app.js','sw.js']){
     assert.doesNotThrow(()=>execFileSync(process.execPath,['--check',path.resolve(new URL(fileName,root).pathname)],{encoding:'utf8'}),
       fileName+' should parse cleanly');
   }
