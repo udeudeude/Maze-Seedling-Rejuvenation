@@ -86,7 +86,11 @@
 </div><div class="panel"><h3>Controller</h3><div class="pad large" aria-label="Remote movement">
 <div></div><button data-control="forward">▲</button><div></div>
 <button data-control="left">↶</button><button data-control="back">▼</button><button data-control="right">↷</button>
-</div><button id="actionBtn" class="secondary wide">Interact / Stop</button><p class="hint">Hold a direction to move continuously. A connected second device drives the host's maze, without needing to remove the phone from Cardboard.</p></div></section>
+</div><button id="actionBtn" class="secondary wide">Interact / Stop</button>
+<div class="tilt-tools"><h3>Tilt controller</h3>
+<p class="hint">Hold your second phone like the physical maze: tilt it forward to walk and sideways to steer. This requires motion permission on iPhone.</p>
+<div class="row wrap"><button id="enableTiltBtn" class="secondary">Enable tilt</button><button id="neutralTiltBtn" class="secondary">Calibrate neutral</button></div>
+<div id="tiltStatus" class="hint" role="status">Tilt control is off.</div></div><p class="hint">Hold a direction to move continuously. A connected second device drives the host's maze, without needing to remove the phone from Cardboard.</p></div></section>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <footer>Independent preservation project · Not affiliated with Seedling · <a href="https://github.com/udeudeude/Maze-Seedling-Rejuvenation">Source code</a></footer>
 </main>
