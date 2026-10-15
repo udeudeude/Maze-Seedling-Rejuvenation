@@ -64,14 +64,14 @@
 <img id="picturePreview" class="picture-preview hidden" alt="Picture attached to maze encounter">
 <div class="row wrap"><button id="recordBtn" class="secondary">Record voice (10s)</button><button id="playRecordingBtn" class="secondary">Play voice</button><button id="removeRecordingBtn" class="secondary">Remove voice</button></div></div><p class="hint">Written messages can be read using on-device speech synthesis.</p></div></section>
 <section id="explore" class="screen hidden"><div class="section-heading"><div><p class="eyebrow">FIRST-PERSON ADVENTURE</p><h2>Walk your creation</h2></div><button class="secondary" id="restartBtn">Restart</button></div>
-<div class="panel dark"><div class="hud"><span id="timer">00:00</span><span id="inventory">✦ 0</span><button id="mapBtn" class="quiet">Map: on</button></div>
+<div class="panel dark"><div class="hud"><span id="timer">00:00</span><span id="inventory">✦ 0</span><button id="soundBtn" class="quiet">Sound: off</button><button id="mapBtn" class="quiet">Map: on</button></div>
 <canvas id="view" class="scene" aria-label="First person maze view"></canvas><div id="encounterCard" class="encounter-card hidden"><img id="encounterImage" class="hidden" alt="Discovered picture"><span id="encounterText"></span><button id="closeEncounterBtn" class="secondary">Close</button></div>
 <div class="pad" aria-label="Movement controls">
 <div></div><button data-control="forward" aria-label="Forward">▲</button><div></div>
 <button data-control="left" aria-label="Turn left">↶</button><button data-control="back" aria-label="Backward">▼</button><button data-control="right" aria-label="Turn right">↷</button>
 </div><p class="hint">Hold buttons to move. Keyboard: W/A/S/D or arrow keys. Gamepads also supported when the browser provides access.</p></div></section>
 <section id="vr" class="screen hidden"><div class="section-heading"><div><p class="eyebrow">GOOGLE CARDBOARD</p><h2>Enter the labyrinth</h2></div></div>
-<div class="panel"><div class="row wrap"><button id="enableMotionBtn">Enable head tracking</button><button id="recenterBtn" class="secondary">Recenter direction</button><button id="fullscreenBtn" class="secondary">Fullscreen</button></div>
+<div class="panel"><div class="row wrap"><button id="enableMotionBtn">Enable head tracking</button><button id="recenterBtn" class="secondary">Recenter direction</button><button id="fullscreenBtn" class="secondary">Fullscreen</button><button id="vrSoundBtn" class="secondary">Sound: off</button></div>
 <div class="fields"><label><input type="checkbox" id="autoWalk"> Walk automatically</label><label>Walk speed<input id="walkSpeed" type="range" min="1" max="10" value="4"></label></div>
 <p class="hint">Place your phone horizontally in a Cardboard viewer. Grant motion access on iPhone. Auto-walk is off until you enable it; use another phone or a Bluetooth gamepad for precise movement.</p></div>
 <canvas id="stereo" class="scene stereo" aria-label="Stereoscopic Cardboard scene"></canvas>
