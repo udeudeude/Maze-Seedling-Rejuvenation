@@ -5,7 +5,15 @@
 <meta name="theme-color" content="#142638"><meta name="description" content="Bring your physical Seedling marble maze into a virtual world. An independent preservation project.">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>MAZE | Build a world. Step inside.</title><link rel="stylesheet" href="./style.css">
-</head>
+<script defer src="https://cloud.umami.is/script.js" data-website-id="f374a945-0ea2-41ed-8eb7-4b6ab6933f9a"></script>
+<script>
+document.addEventListener('click', function(e) {
+  const control=e.target.closest('button,a,[role="button"]');
+  if (!control || !window.umami || typeof umami.track !== 'function') return;
+  const label=(control.id+' '+(control.getAttribute('aria-label')||'')+' '+(control.textContent||'').slice(0,60)).toLowerCase();
+  if (/explore|play|scan|generate/i.test(label)) umami.track('app-use',{project:'maze-seedling-rejuvenation',action:'interaction'});
+},true);
+</script></head>
 <body>
 <header><div class="brand"><span class="logo">MAZE<span class="logo-dot">.</span></span>
 <span class="subtitle">SEEDLING REJUVENATION</span></div><button class="quiet" id="helpBtn" aria-label="Help">?</button></header>
